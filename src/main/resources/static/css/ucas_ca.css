@@ -1,0 +1,22 @@
+.downloadLayer .ucs-layer-header{
+    height: 45px;
+}
+.downloadLayer .fileDiv{
+    height: 100px;
+}
+.downloadDiv{
+    float: left;
+    width: 105px;
+    height: 35px;
+    display: block;
+}
+.downloadDiv .text{
+    font-size: 16px;
+    padding-left: 7px;
+}
+.downloadLayer .ucs-layer-footer .ucs-btn{
+    height: 30px;
+    line-height: 30px;
+    width: 100px;
+    font-size: 14px;
+}

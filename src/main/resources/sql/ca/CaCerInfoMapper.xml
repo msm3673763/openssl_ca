@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ucsmy.ucas.ca.dao.CaCerInfoMapper">
+
+    <resultMap type="com.ucsmy.ucas.ca.entity.CaCerInfo" id="BaseResultMap">
+        <result column="cer_uuid" property="cerUuid" jdbcType="VARCHAR"/>
+        <result column="cer_type" property="cerType" jdbcType="VARCHAR"/>
+        <result column="domain_name" property="domainName" jdbcType="VARCHAR"/>
+        <result column="country" property="country" jdbcType="VARCHAR"/>
+        <result column="province" property="province" jdbcType="VARCHAR"/>
+        <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="org_name" property="orgName" jdbcType="VARCHAR"/>
+        <result column="org_unit_name" property="orgUnitName" jdbcType="VARCHAR"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>
+        <result column="machine_code" property="machineCode" jdbcType="VARCHAR"/>
+        <result column="create_date" property="createDate" jdbcType="TIMESTAMP"/>
+        <result column="create_user" property="createUser" jdbcType="VARCHAR"/>
+        <result column="dead_time" property="deadTime" jdbcType="TIMESTAMP"/>
+        <result column="cer_status" property="cerStatus" jdbcType="VARCHAR"/>
+        <result column="crl_url" property="crlUrl" jdbcType="VARCHAR"/>
+        <result column="file_name" property="fileName" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="BASIC_COLUMN">
+        cer_uuid,cer_type,domain_name,country,province,city,org_name,org_unit_name,email,
+        machine_code,create_date,create_user,dead_time,cer_status,crl_url,file_name
+    </sql>
+
+    <select id="queryPasswordByMap" parameterType="map" resultType="string">
+        SELECT f.p12_secret FROM ca_cer_info i,ca_cer_file f
+        WHERE f.CER_UUID = i.CER_UUID AND i.cer_uuid = #{cerUuid}
+            AND f.FILE_TYPE = #{fileType}
+    </select>
+    
+    <select id="queryFileIdsByCNAndType" parameterType="com.ucsmy.ucas.ca.entity.CaCerInfo" resultType="string">
+        SELECT f.FILE_DBID
+        FROM ca_cer_info i,ca_cer_file f
+        <where>
+            i.cer_uuid = f.cer_uuid
+            <if test="domainName!=null and domainName!=''">
+                AND i.domain_name = #{domainName}
+            </if>
+            <if test="fileType!=null and fileType!=''">
+                AND f.file_type = #{fileType}
+            </if>
+            <if test="cerStatus!=null and cerStatus!=''">
+                AND i.cer_status = #{cerStatus}
+            </if>
+        </where>
+    </select>
+
+    <select id="getBeanById" parameterType="string" resultType="com.ucsmy.ucas.ca.ext.CertResponseBody">
+        SELECT
+        i.cer_uuid as cerCode,
+        i.cer_type as cerType,
+        i.domain_name as domainName,
+        i.country as country,
+        i.province as province,
+        i.city as city,
+        i.org_name as orgName,
+        i.org_unit_name as orgUnitName,
+        i.email as email,
+        i.machine_code as machineCode,
+        date_format(i.create_date,'%Y-%m-%d %T') as createDate,
+        date_format(i.dead_time,'%Y-%m-%d %T') as deadTime,
+        i.create_user as createUser,
+        i.cer_status as cerStatus,
+        f.p12_secret as p12Secret,
+        i.file_name as fileName
+        FROM ca_cer_info i,ca_cer_file f
+        WHERE i.cer_uuid = f.cer_uuid and f.file_type = "p12" and i.cer_uuid = #{cerUuid}
+    </select>
+
+    <select id="getBeanByCN" parameterType="string" resultMap="BaseResultMap">
+        select <include refid="BASIC_COLUMN"/>
+        from ca_cer_info
+        where domain_name = #{domainName}
+    </select>
+
+    <select id="queryBeansByMap" parameterType="map" resultType="com.ucsmy.ucas.ca.ext.CertResponseBody">
+        SELECT
+            cer_uuid as cerUuid,
+            cer_type as cerType,
+            domain_name as domainName,
+            country as country,
+            province as province,
+            city as city,
+            org_name as orgName,
+            org_unit_name as orgUnitName,
+            email as email,
+            machine_code as machineCode,
+            create_date as createDate,
+            create_user as createUser,
+            dead_time as deadTime,
+            cer_status as cerStatus,
+            CRL_URL as crlUrl,
+            file_name as fileName
+        FROM ca_cer_info
+        <where>
+            <if test="cerUuid !=null and cerUuid != ''">
+                AND cer_uuid = #{cerUuid}
+            </if>
+            <if test="cerType !=null and cerType != ''">
+                AND cer_type = #{cerType}
+            </if>
+            <if test="domainName !=null and domainName != ''">
+                AND domain_name = #{domainName}
+            </if>
+            <if test="cerStatus !=null and cerStatus != ''">
+                AND cer_status = #{cerStatus}
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteByDomainName" parameterType="string">
+        DELETE FROM ca_cer_info WHERE domain_name = #{domainName}
+    </delete>
+    
+    <insert id="insert" parameterType="com.ucsmy.ucas.ca.entity.CaCerInfo">
+        INSERT INTO
+        CA_CER_INFO (CER_UUID, CER_TYPE, DOMAIN_NAME, COUNTRY, PROVINCE, CITY, ORG_NAME, ORG_UNIT_NAME,
+        EMAIL, MACHINE_CODE, CREATE_DATE, CREATE_USER, DEAD_TIME, CER_STATUS, CRL_URL, file_name)
+        VALUE (
+        #{cerUuid},
+        #{cerType},
+        #{domainName},
+        #{country},
+        #{province},
+        #{city},
+        #{orgName},
+        #{orgUnitName},
+        #{email},
+        #{machineCode},
+        #{createDate},
+        #{createUser},
+        #{deadTime},
+        #{cerStatus},
+        #{crlUrl},
+        #{fileName}
+        )
+    </insert>
+
+    <select id="getBeanByBean" parameterType="com.ucsmy.ucas.ca.entity.CaCerInfo" resultMap="BaseResultMap">
+        SELECT <include refid="BASIC_COLUMN"/>
+        FROM CA_CER_INFO
+        <where>
+            <if test="cerUuid !=null and cerUuid != ''">
+              AND cer_uuid = #{cerUuid}
+            </if>
+            <if test="cerType !=null and cerType != ''">
+                AND cer_type = #{cerType}
+            </if>
+            <if test="domainName !=null and domainName != ''">
+              AND domain_name = #{domainName}
+            </if>
+            <if test="cerStatus !=null and cerStatus != ''">
+              AND cer_status = #{cerStatus}
+            </if>
+        </where>
+    </select>
+
+    <delete id="delete" >
+        DELETE FROM
+          CA_CER_INFO
+        WHERE
+          1 = 1
+    </delete>
+
+    <delete id="deleteByCerUuid" parameterType="string">
+        delete from ca_cer_info where cer_uuid = #{cerUuid}
+    </delete>
+</mapper>

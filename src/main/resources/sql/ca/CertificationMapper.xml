@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ucsmy.ucas.ca.dao.CertificationMapper">
+    <resultMap type="com.ucsmy.ucas.ca.ext.CertificationPojo" id="certificationResult" >
+        <result column="cerUuid" property="cerUuid"/>
+        <result column="cerType" property="cerType"/>
+        <result column="domainName" property="domainName"/>
+        <result column="country" property="country"/>
+        <result column="province" property="province"/>
+        <result column="city" property="city"/>
+        <result column="orgName" property="orgName"/>
+        <result column="orgUnitName" property="orgUnitName"/>
+        <result column="email" property="email"/>
+        <result column="machineCode" property="machineCode"/>
+        <result column="fileName" property="fileName"/>
+        <result column="createDate" property="createDate"/>
+        <result column="createUser" property="createUser"/>
+        <result column="deadTime" property="deadTime"/>
+        <result column="cerStatus" property="cerStatus"/>
+        <collection property="fileList" javaType="ArrayList" ofType="com.ucsmy.ucas.ca.ext.FilePojo">
+            <result property="fileDBId" column="fileDBId" />
+            <result property="fileType" column="fileType" />
+            <result property="p12Secret" column="p12Secret" />
+        </collection>
+    </resultMap>
+    <sql id="cerInfoTable" >
+        ca_cer_info
+    </sql>
+    <sql id="cerFileTable" >
+        ca_cer_file
+    </sql>
+    <select id="queryCertificationListByPage" resultType="string" parameterType="com.ucsmy.ucas.ca.entity.CaCerInfo">
+        SELECT
+            ci.cer_uuid AS cerUuid
+        FROM
+            <include refid="cerInfoTable" /> AS ci
+        <where>
+            ci.cer_type = #{certification.cerType}
+            <if test='certification != null and !(certification.domainName == null || certification.domainName == "")'>
+                AND ci.domain_name LIKE concat('%', #{certification.domainName}, '%')
+            </if>
+        </where>
+        ORDER BY ci.create_date DESC
+    </select>
+
+    <select id="queryCertificationListById" resultMap="certificationResult" parameterType="java.util.List">
+        SELECT
+            ci.cer_uuid AS cerUuid,
+            ci.cer_type AS cerType,
+            ci.domain_name AS domainName,
+            ci.country AS country,
+            ci.province AS province,
+            ci.city AS city,
+            ci.org_name AS orgName,
+            ci.org_unit_name AS orgUnitName,
+            ci.email AS email,
+            ci.machine_code AS machineCode,
+            ci.file_name as fileName,
+            ci.create_date AS createDate,
+            ci.create_user AS createUser,
+            ci.dead_time AS deadTime,
+            ci.cer_status AS cerStatus,
+            cf.file_dbid AS fileDBId,
+            cf.file_type AS fileType,
+            cf.P12_SECRET as p12Secret
+        FROM
+            <include refid="cerInfoTable" /> AS ci
+        LEFT JOIN
+            <include refid="cerFileTable" /> AS cf
+        ON ci.cer_uuid = cf.cer_uuid
+        <where>
+            ci.cer_uuid IN
+            <foreach collection="ids" item="item" index="index" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+        ORDER BY ci.create_date DESC
+    </select>
+
+    <select id="queryCACertification" resultMap="certificationResult" >
+        SELECT
+            ci.cer_uuid AS cerUuid,
+            ci.cer_type AS cerType,
+            ci.domain_name AS domainName,
+            ci.country AS country,
+            ci.province AS province,
+            ci.city AS city,
+            ci.org_name AS orgName,
+            ci.org_unit_name AS orgUnitName,
+            ci.email AS email,
+            ci.machine_code AS machineCode,
+            ci.file_name AS fileName,
+            ci.create_date AS createDate,
+            ci.create_user AS createUser,
+            ci.dead_time AS deadTime,
+            ci.cer_status AS cerStatus,
+            cf.file_dbid AS fileDBId,
+            cf.file_type AS fileType
+        FROM
+            <include refid="cerInfoTable" /> AS ci
+        LEFT JOIN
+            <include refid="cerFileTable" /> AS cf
+        ON ci.cer_uuid = cf.cer_uuid
+        <where>
+            ci.cer_type = '3'
+            AND cf.file_type = 'crt'
+            AND ci.cer_status = '1'
+        </where>
+    </select>
+    <select id="queryCertificationById" resultMap="certificationResult" parameterType="String">
+        SELECT
+            ci.cer_uuid AS cerUuid,
+            ci.cer_type AS cerType,
+            ci.domain_name AS domainName,
+            ci.country AS country,
+            ci.province AS province,
+            ci.city AS city,
+            ci.org_name AS orgName,
+            ci.org_unit_name AS orgUnitName,
+            ci.email AS email,
+            ci.machine_code AS machineCode,
+            ci.create_date AS createDate,
+            ci.create_user AS createUser,
+            ci.dead_time AS deadTime,
+            ci.cer_status AS cerStatus
+        FROM
+            <include refid="cerInfoTable" /> AS ci
+        <where>
+            ci.cer_uuid = #{certId}
+        </where>
+    </select>
+    <select id="queryCertificationByIdAndFileType" resultMap="certificationResult" parameterType="java.util.Map">
+        SELECT
+            ci.cer_uuid AS cerUuid,
+            ci.cer_type AS cerType,
+            ci.domain_name AS domainName,
+            ci.country AS country,
+            ci.province AS province,
+            ci.city AS city,
+            ci.org_name AS orgName,
+            ci.org_unit_name AS orgUnitName,
+            ci.email AS email,
+            ci.machine_code AS machineCode,
+            ci.file_name as fileName,
+            ci.create_date AS createDate,
+            ci.create_user AS createUser,
+            ci.dead_time AS deadTime,
+            ci.cer_status AS cerStatus,
+            cf.file_dbid AS fileDBId,
+            cf.file_type AS fileType
+        FROM
+        <include refid="cerInfoTable" /> AS ci
+        LEFT JOIN
+        <include refid="cerFileTable" /> AS cf
+        ON ci.cer_uuid = cf.cer_uuid
+        <where>
+            ci.cer_uuid = #{certId}
+            AND  cf.file_type = #{fileType}
+        </where>
+    </select>
+    
+    <select id="queryCertByIdAndFileType" parameterType="map" resultMap="certificationResult">
+        SELECT
+        ci.cer_uuid AS cerUuid,
+        ci.cer_type AS cerType,
+        ci.domain_name AS domainName,
+        ci.country AS country,
+        ci.province AS province,
+        ci.city AS city,
+        ci.org_name AS orgName,
+        ci.org_unit_name AS orgUnitName,
+        ci.email AS email,
+        ci.machine_code AS machineCode,
+        ci.create_date AS createDate,
+        ci.create_user AS createUser,
+        ci.dead_time AS deadTime,
+        ci.cer_status AS cerStatus,
+        cf.file_dbid AS fileDBId,
+        cf.file_type AS fileType,
+        ci.file_name as fileName
+        FROM
+        <include refid="cerInfoTable" /> AS ci
+        LEFT JOIN
+        <include refid="cerFileTable" /> AS cf
+        ON ci.cer_uuid = cf.cer_uuid
+        <where>
+            ci.cer_uuid = #{cerUuid}
+            AND  cf.file_type = #{fileType}
+            AND ci.cer_type = #{cerType}
+        </where>
+    </select>
+
+    <update id="updateCertStatusAndCrl"  parameterType="java.util.Map" >
+        UPDATE
+            <include refid="cerInfoTable" />
+        SET
+            cer_status = '2',
+            crl_url = #{crlUrl}
+        <where>
+            cer_uuid = #{certId}
+        </where>
+    </update>
+</mapper>

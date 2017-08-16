@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.ucsmy.ucas.ca.dao.CaCerFileMapper">
+
+    <insert id="insert" parameterType="com.ucsmy.ucas.ca.entity.CaCerFile">
+        INSERT INTO
+            CA_CER_FILE(FILE_DBID, CER_UUID, FILE_TYPE, P12_SECRET, FILE_DATE)
+        VALUE(
+            #{fileDBId},
+            #{cerUuid},
+            #{fileType},
+            #{p12Secret},
+            #{fileDate}
+        )
+    </insert>
+
+    <delete id="deleteByDomainName" parameterType="string">
+        DELETE FROM ca_cer_file WHERE cer_uuid in (SELECT cer_uuid FROM ca_cer_info WHERE domain_name = #{domainName})
+    </delete>
+    
+    <select id="queryFileIdsByMap" parameterType="map" resultType="string">
+        SELECT file_dbid FROM ca_cer_file f,ca_cer_info i
+        <where>
+            i.cer_uuid = f.cer_uuid
+            <if test="cerUuid!=null and cerUuid!=''">
+                AND i.cer_uuid = #{cerUuid}
+            </if>
+            <if test="fileType!=null and fileType!=''">
+                AND f.file_type = #{fileType}
+            </if>
+            <if test="domainName!=null and domainName!=''">
+                AND i.cer_status = #{cerStatus}
+            </if>
+        </where>
+    </select>
+
+    <delete id="batchDelete" parameterType="java.util.List">
+        DELETE FROM ca_cer_file
+        <where>
+            file_dbid in
+            <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </delete>
+    
+    <select id="queryFileIdsByCerUuid" parameterType="string" resultType="string">
+        select f.FILE_DBID from ca_cer_file f,ca_cer_info i where i.CER_UUID = f.CER_UUID and i.cer_uuid = #{cerUuid}
+    </select>
+
+    <delete id="delete" >
+        DELETE FROM
+          CA_CER_FILE
+        WHERE
+          1 = 1
+    </delete>
+</mapper>
